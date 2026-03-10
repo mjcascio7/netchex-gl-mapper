@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Netchex GL Mapper — Dealership Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d0f14; --surface:#13161e; --surface2:#1a1e28;
+  --border:#252a38; --accent:#00e5a0; --warn:#f59e0b;
+  --danger:#ef4444; --text:#e8eaf0; --muted:#6b7280;
+  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px 60px;position:relative;z-index:1;}
+
+/* HEADER */
+header{background:rgba(13,15,20,0.97);border-bottom:1px solid var(--border);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-hex{width:28px;height:28px;background:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#000;}
+.logo-text{font-weight:700;font-size:15px;letter-spacing:.03em;}
+.logo-text span{color:var(--accent);}
+.badge{font-family:var(--mono);font-size:10px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:var(--accent);padding:3px 8px;border-radius:2px;letter-spacing:.08em;}
+
+/* API KEY SCREEN */
+#apiScreen{display:flex;align-items:center;justify-content:center;min-height:80vh;}
+.api-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;max-width:480px;width:100%;}
+.api-card h2{font-size:20px;font-weight:800;margin-bottom:8px;}
+.api-card h2 span{color:var(--accent);}
+.api-card p{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:24px;}
+.api-hint{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:20px;background:var(--surface2);padding:10px 14px;border-radius:6px;border:1px solid var(--border);}
+
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0;}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;position:relative;transition:border-color .2s;}
+.step.active{border-color:var(--accent);}
+.step.done{border-color:rgba(0,229,160,.35);}
+.step-num{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.1em;}
+.step.active .step-num{color:var(--accent);}
+.step h3{font-size:13px;font-weight:700;margin-bottom:2px;}
+.step p{font-size:11px;color:var(--muted);}
+.step-check{position:absolute;top:12px;right:12px;width:18px;height:18px;background:var(--accent);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:800;}
+.step.done .step-check{display:flex;}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden;display:none;}
+.panel.active{display:block;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);}
+.panel-head h2{font-size:15px;font-weight:700;}
+.panel-body{padding:22px;}
+
+/* FORM */
+.field{margin-bottom:16px;}
+.field label{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+input,textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 13px;outline:none;transition:border-color .2s;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);}
+textarea{resize:vertical;line-height:1.65;}
+select option{background:var(--surface2);}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+
+/* BUTTONS */
+.btn{font-family:var(--sans);font-size:13px;font-weight:700;padding:9px 20px;border-radius:6px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s;letter-spacing:.02em;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#00ffb3;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-row{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap;}
+
+/* ALERTS */
+.alert{border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:16px;line-height:1.5;}
+.alert-green{background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.alert-yellow{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);color:var(--warn);}
+.alert-blue{background:rgba(0,102,255,.08);border:1px solid rgba(0,102,255,.2);color:#7cb3ff;}
+.alert-red{color:var(--danger);font-family:var(--mono);font-size:12px;margin-top:10px;}
+
+/* PROGRESS */
+.progress-wrap{margin-top:14px;}
+.progress-row{display:flex;justify-content:space-between;margin-bottom:6px;}
+.progress-label{font-family:var(--mono);font-size:11px;color:var(--accent);}
+.progress-count{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.progress-track{height:4px;background:var(--border);border-radius:2px;}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+.stat-val{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;}
+.stat-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+/* FILTER PILLS */
+.pills{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{font-family:var(--mono);font-size:10px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);cursor:pointer;color:var(--muted);transition:all .15s;background:transparent;}
+.pill.active{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,.08);}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 12px;border-bottom:1px solid rgba(37,42,56,.5);vertical-align:middle;}
+tr.review-row td{background:rgba(245,158,11,.04);}
+.conf-badge{font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:2px;white-space:nowrap;}
+.map-select{background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:11px;padding:5px 8px;min-width:230px;outline:none;}
+.map-select:focus{border-color:var(--warn);}
+
+/* KEY INDICATOR */
+.key-indicator{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+.key-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+.key-change{cursor:pointer;color:var(--accent);text-decoration:underline;background:none;border:none;font-family:var(--mono);font-size:11px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-hex">N</div>
+    <div class="logo-text"><span>Netchex</span> GL Mapper</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="key-indicator" id="keyIndicator" style="display:none;">
+      <div class="key-dot"></div>
+      <span>API key active</span>
+      <button class="key-change" onclick="changeKey()">change</button>
+    </div>
+    <span class="badge">DEALERSHIP ONBOARDING</span>
+  </div>
+</header>
+
+<!-- API KEY SCREEN -->
+<div class="wrap">
+<div id="apiScreen">
+  <div class="api-card">
+    <h2>Welcome to <span>GL Mapper</span></h2>
+    <p>Enter your Anthropic API key to get started. It's saved in your browser — you'll only need to do this once on this device.</p>
+    <div class="api-hint">
+      Get your key at <strong>console.anthropic.com</strong><br>
+      API Keys → Create Key → Copy the sk-ant-... value
+    </div>
+    <div class="field">
+      <label>Anthropic API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" />
+    </div>
+    <div id="apiError" class="alert-red" style="display:none;"></div>
+    <button class="btn btn-primary" onclick="saveApiKey()" style="width:100%;justify-content:center;margin-top:8px;">
+      Save &amp; Continue →
+    </button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appMain" style="display:none;">
+
+  <!-- Step indicators -->
+  <div class="steps">
+    <div class="step active" id="s1">
+      <div class="step-num">STEP 01</div>
+      <h3>Client Setup</h3>
+      <p>Company info &amp; DMS type</p>
+      <div class="step-check">✓</div>
+    </div>
+    <div class="step" id="s2">
+      <div class="step-num">STEP 02</div>
+      <h3>Chart of Accounts</h3>
+      <p>Paste or upload COA</p>
+      <div class="step-check">✓</div>
+    </div>
+    <div class="step" id="s3">
+      <div class="step-num">STEP 03</div>
+      <h3>Review &amp; Export</h3>
+      <p>Confirm mappings, export CSV</p>
+      <div class="step-check">✓</div>
+    </div>
+  </div>
+
+  <!-- PANEL 1: Client Setup -->
+  <div class="panel active" id="panel1">
+    <div class="panel-head">
+      <h2>Client Setup</h2>
+      <span class="badge">STEP 1 OF 3</span>
+    </div>
+    <div class="panel-body">
+      <div class="grid3">
+        <div class="field">
+          <label>Company Code</label>
+          <input type="text" id="companyCode" placeholder="e.g. 0N9" />
+        </div>
+        <div class="field">
+          <label>Company Name</label>
+          <input type="text" id="companyName" placeholder="e.g. Reynolds Garage & Marine" />
+        </div>
+        <div class="field">
+          <label>Netchex Rep</label>
+          <input type="text" id="repName" placeholder="Your name" />
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="field">
+          <label>DMS Platform</label>
+          <select id="dmsPlatform">
+            <option value="">Select DMS...</option>
+            <option value="dealertrack">Dealertrack</option>
+            <option value="tekion">Tekion</option>
+            <option value="cdk">CDK Global</option>
+            <option value="reynolds">Reynolds &amp; Reynolds (R&amp;R)</option>
+            <option value="dealersocket">DealerSocket</option>
+            <option value="automate">Auto/Mate</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Dealership Type</label>
+          <select id="dealerType">
+            <option value="">Select type...</option>
+            <option value="auto_full">Auto — Full Store</option>
+            <option value="auto_new">Auto — New Sales Only</option>
+            <option value="marine">Marine</option>
+            <option value="rv">RV</option>
+            <option value="powersports">Powersports</option>
+            <option value="multi">Multi-Brand / Multi-Rooftop</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Primary Contact</label>
+          <input type="text" id="contactName" placeholder="Controller or Office Manager" />
+        </div>
+      </div>
+      <div id="step1Error" class="alert-red" style="display:none;"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goStep2()">Continue to Chart of Accounts →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: COA Input -->
+  <div class="panel" id="panel2">
+    <div class="panel-head">
+      <h2>Chart of Accounts</h2>
+      <span class="badge">STEP 2 OF 3</span>
+    </div>
+    <div class="panel-body">
+      <div class="alert alert-blue">
+        ℹ One account per line — <strong>AccountNumber — Description</strong><br>
+        Separator can be a dash (—), hyphen (-), comma, or tab. Example: <code>321 — ACCRUED PAYROLL</code>
+      </div>
+      <div class="field">
+        <label id="coaLabel">Chart of Accounts (0 accounts parsed)</label>
+        <textarea id="coaText" rows="16" placeholder="Paste accounts here, e.g.:&#10;202A — PAYROLL CHECKING&#10;321 — ACCRUED PAYROLL&#10;323 — ACCRUED TAXES-PAYROLL&#10;600105 — REGULAR WAGES&#10;..."></textarea>
+      </div>
+
+      <div id="progressWrap" class="progress-wrap" style="display:none;">
+        <div class="progress-row">
+          <span class="progress-label" id="progressLabel">Processing...</span>
+          <span class="progress-count" id="progressCount">0/0</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+
+      <div id="step2Error" class="alert-red" style="display:none;"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep1()">← Back</button>
+        <button class="btn btn-primary" id="mapBtn" onclick="runMapping()">🤖 Run AI Mapping</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: Review & Export -->
+  <div class="panel" id="panel3">
+    <div class="panel-head">
+      <h2 id="panel3Title">Review Mappings &amp; Export</h2>
+      <span class="badge">STEP 3 OF 3</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="statTotal" style="color:#7cb3ff">—</div><div class="stat-lbl">TOTAL ACCOUNTS</div></div>
+        <div class="stat"><div class="stat-val" id="statHigh" style="color:#00e5a0">—</div><div class="stat-lbl">AUTO-MAPPED</div></div>
+        <div class="stat"><div class="stat-val" id="statReview" style="color:#f59e0b">—</div><div class="stat-lbl">NEEDS REVIEW</div></div>
+        <div class="stat"><div class="stat-val" id="statNone" style="color:#ef4444">—</div><div class="stat-lbl">NO MATCH</div></div>
+      </div>
+
+      <div id="reviewAlert"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+        <div class="pills" id="filterPills">
+          <div class="pill active" onclick="setFilter('all',this)">ALL</div>
+          <div class="pill" onclick="setFilter('review',this)">⚠ NEEDS REVIEW</div>
+          <div class="pill" onclick="setFilter('high',this)">✓ HIGH CONFIDENCE</div>
+          <div class="pill" onclick="setFilter('none',this)">✗ NO MATCH</div>
+        </div>
+        <input style="width:240px;" type="text" placeholder="Search accounts..." oninput="renderTable()" id="searchInput" />
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>DMS ACCT #</th>
+              <th>DMS DESCRIPTION</th>
+              <th>MAPPED TO — NETCHEX GL</th>
+              <th>CONF</th>
+              <th>REASON</th>
+            </tr>
+          </thead>
+          <tbody id="tblBody"></tbody>
+        </table>
+      </div>
+
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-secondary" onclick="goStep2()">← Back</button>
+        <button class="btn btn-primary" onclick="exportCSV()">⬇ Export Netchex GL Import CSV</button>
+        <button class="btn btn-secondary" onclick="resetAll()">↺ New Client</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /appMain -->
+</div><!-- /wrap -->
+
+<script>
+// ─── NETCHEX GL COLUMNS ────────────────────────────────────────────────────
+const GL = [
+  {col:"100100",label:"CASH"},
+  {col:"1069A",label:"Payroll Fees"},
+  {col:"200100",label:"PAYABLE - TAXES"},
+  {col:"200101",label:"PAYABLE - 401K"},
+  {col:"200102",label:"PAYABLE - DENTAL"},
+  {col:"200103",label:"PAYABLE - MEDICAL"},
+  {col:"200104",label:"PAYABLE - MISCELLANEOUS"},
+  {col:"200105",label:"PAYABLE - VISION"},
+  {col:"200106",label:"PAYABLE - FEDERAL"},
+  {col:"200107",label:"PAYABLE - MEDICARE"},
+  {col:"200108",label:"PAYABLE - SOCIAL SECURITY"},
+  {col:"200109",label:"PAYABLE - STATE WITHHOLDING"},
+  {col:"200110",label:"PAYABLE - CHILD SUPPORT"},
+  {col:"200111",label:"PAYABLE - SUTA"},
+  {col:"200112",label:"PAYABLE - FUTA"},
+  {col:"200113",label:"PAYABLE - SPIFF OUT"},
+  {col:"200114",label:"PAYABLE - DRAW OUT"},
+  {col:"200115",label:"PAYABLE - ACCOUNTS RECEIVABLE"},
+  {col:"200116",label:"PAYABLE - DEMO OUT"},
+  {col:"200117",label:"PAYABLE - 401K LOAN"},
+  {col:"200118",label:"PAYABLE - WORKERS COMPENSATION"},
+  {col:"200119",label:"PAYABLE - GARNISHMENT"},
+  {col:"200120",label:"PAYABLE - UNIFORM"},
+  {col:"200121",label:"AFLAC"},
+  {col:"200122",label:"CT PAID FAMILY LEAVE"},
+  {col:"200123",label:"PAYABLE - LOAN PAYMENT"},
+  {col:"200124",label:"PAYABLE - LONG TERM DISABILITY"},
+  {col:"200125",label:"PAYABLE - SUPPLEMENTAL LIFE"},
+  {col:"200126",label:"PAYABLE - VEHICLE REC"},
+  {col:"200190",label:"PAYABLE - 401K MATCH"},
+  {col:"200990",label:"PAYROLL TAX SUSPENSE ACCOUNT"},
+  {col:"202A",label:"Payroll Cash Account"},
+  {col:"202M",label:"Taxes Cash Account"},
+  {col:"500000",label:"PAYROLL FEES"},
+  {col:"600101",label:"BEREAVEMENT/JURY DUTY"},
+  {col:"600102",label:"BONUS"},
+  {col:"600103",label:"COMMISSION"},
+  {col:"600104",label:"HOLIDAY"},
+  {col:"600105",label:"REGULAR"},
+  {col:"600107",label:"OVERTIME"},
+  {col:"600108",label:"PTO/PERSONAL/SICK/VACATION"},
+  {col:"600109",label:"COMMISSION - NEW"},
+  {col:"600110",label:"COMMISSION - USED"},
+  {col:"600111",label:"SPIFF IN"},
+  {col:"600112",label:"DRAW IN"},
+  {col:"600113",label:"DEMO IN"},
+  {col:"600114",label:"TECH TIME"},
+  {col:"600115",label:"TRAINING"},
+  {col:"600116",label:"3RD PARTY SICK"},
+  {col:"600117",label:"BDAY/FUNERAL"},
+  {col:"600118",label:"DOUBLE TIME"},
+  {col:"600119",label:"MEDICAL INSURANCE"},
+  {col:"600120",label:"REIMBURSEMENT"},
+  {col:"600121",label:"SCHOOL"},
+  {col:"600122",label:"TEMP RATE"},
+  {col:"600200",label:"ER MEDICARE EXPENSE"},
+  {col:"600201",label:"ER SOCIAL SECURITY EXPENSE"},
+  {col:"600202",label:"ER FUTA EXPENSE"},
+  {col:"600203",label:"ER SUTA EXPENSE"},
+  {col:"600204",label:"EMPLOYER WORKERS COMP EXPENSE"},
+  {col:"600205",label:"EMPLOYER TAX EXPENSE"},
+  {col:"600206",label:"EMPLOYER 401K MATCH"},
+  {col:"600207",label:"EMPLOYER PAID INSURANCE"},
+  {col:"600208",label:"401K Expense"},
+  {col:"69A",label:"Payroll Fee"},
+  {col:"888888",label:"Payable - Earned Wage Access (RAIN)"},
+  {col:"900EXP",label:"DEDUCTION EXPENSE"},
+  {col:"NDBONUSOT1",label:"NON DISCRETIONARY OVERTIME PREMIUM"},
+  {col:"UPDATE",label:"SUSPENSE ACCT (SEE INVOICE)"},
+];
+const GL_MAP = Object.fromEntries(GL.map(g=>[g.col,g.label]));
+const GL_REF = GL.map(g=>`${g.col} = ${g.label}`).join('\n');
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let mappings = [];
+let activeFilter = 'all';
+
+// ─── API KEY ───────────────────────────────────────────────────────────────
+function init() {
+  const key = localStorage.getItem('netchex_api_key');
+  if (key) {
+    document.getElementById('apiScreen').style.display = 'none';
+    document.getElementById('appMain').style.display = 'block';
+    document.getElementById('keyIndicator').style.display = 'flex';
+  }
+  document.getElementById('coaText').addEventListener('input', updateCoaLabel);
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const err = document.getElementById('apiError');
+  if (!key.startsWith('sk-ant-')) {
+    err.textContent = '⚠ Key should start with sk-ant- — check and try again.';
+    err.style.display = 'block'; return;
+  }
+  localStorage.setItem('netchex_api_key', key);
+  document.getElementById('apiScreen').style.display = 'none';
+  document.getElementById('appMain').style.display = 'block';
+  document.getElementById('keyIndicator').style.display = 'flex';
+}
+
+function changeKey() {
+  localStorage.removeItem('netchex_api_key');
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiScreen').style.display = 'flex';
+  document.getElementById('appMain').style.display = 'none';
+  document.getElementById('keyIndicator').style.display = 'none';
+}
+
+// ─── NAVIGATION ────────────────────────────────────────────────────────────
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('panel'+i).classList.toggle('active', i===n);
+    const s = document.getElementById('s'+i);
+    s.classList.toggle('active', i===n);
+    s.classList.toggle('done', i<n);
+  });
+}
+function goStep1() { setStep(1); }
+function goStep2() {
+  const code = document.getElementById('companyCode').value.trim();
+  const name = document.getElementById('companyName').value.trim();
+  const err = document.getElementById('step1Error');
+  if (!code || !name) { err.textContent='⚠ Company Code and Company Name are required.'; err.style.display='block'; return; }
+  err.style.display='none'; setStep(2);
+}
+
+// ─── COA PARSING ───────────────────────────────────────────────────────────
+function parseCOA(text) {
+  return text.split(/\r?\n/)
+    .filter(l=>l.trim()&&!l.startsWith('['))
+    .map(line=>{
+      const m = line.match(/^([A-Za-z0-9\-\.]+)\s*[—\-,\t]\s*(.+)$/);
+      return m ? {num:m[1].trim(), desc:m[2].trim()} : {num:'', desc:line.trim()};
+    }).filter(a=>a.desc);
+}
+
+function updateCoaLabel() {
+  const n = parseCOA(document.getElementById('coaText').value).length;
+  document.getElementById('coaLabel').textContent = `Chart of Accounts (${n} accounts parsed)`;
+}
+
+// ─── CHUNK HELPER ──────────────────────────────────────────────────────────
+function chunk(arr, n) {
+  const out=[];
+  for(let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n));
+  return out;
+}
+
+// ─── PIPE-FORMAT PARSER ────────────────────────────────────────────────────
+// Response format per line: INDEX|NETCHEX_COL_OR_NONE|CONFIDENCE|REASON
+function parsePipe(text, accounts, offset) {
+  const results = [];
+  const lines = text.split(/\r?\n/).filter(l=>l.includes('|'));
+  for (const line of lines) {
+    const parts = line.split('|').map(p=>p.trim());
+    if (parts.length < 3) continue;
+    const idx = parseInt(parts[0]);
+    if (isNaN(idx)) continue;
+    const ai = idx - 1 - offset;
+    if (ai < 0 || ai >= accounts.length) continue;
+    const col = (!parts[1] || parts[1]==='NONE') ? null : parts[1];
+    const conf = ['high','medium','low','none'].includes(parts[2]) ? parts[2] : 'low';
+    const reason = parts[3] || '';
+    results.push({
+      index: idx,
+      dmsNum: accounts[ai].num,
+      dmsDesc: accounts[ai].desc,
+      netchexCol: col,
+      netchexLabel: col ? (GL_MAP[col]||col) : null,
+      confidence: col ? conf : 'none',
+      reason,
+    });
+  }
+  return results;
+}
+
+// ─── API CALL ──────────────────────────────────────────────────────────────
+async function mapChunk(accounts, offset) {
+  const apiKey = localStorage.getItem('netchex_api_key');
+  const acctLines = accounts.map((a,i)=>`${offset+i+1}. ${a.num ? a.num+' — ' : ''}${a.desc}`).join('\n');
+
+  const prompt = `You are an expert dealership payroll accountant mapping DMS Chart of Accounts to Netchex GL columns.
+
+NETCHEX GL COLUMNS (use exact codes only):
+${GL_REF}
+
+DMS ACCOUNTS TO MAP:
+${acctLines}
+
+MAPPING RULES:
+- Owner/supervisor/clerical/other salaries & wages → 600105
+- Absentee comp, PTO, bereavement, sick, vacation → 600108
+- Employee benefits expense (health/medical/insurance) → 600207
+- Pension fund / 401k expense → 600208
+- Payroll tax expense employer side → 600205
+- FUTA expense → 600202 | SUTA/state unemp expense → 600203
+- ER Medicare expense → 600200 | ER SS expense → 600201
+- Workers comp expense → 600204
+- 401k employer match expense → 600206
+- Accrued payroll / accrued taxes-payroll liability → 200100
+- 401k accrued employee liability → 200101
+- 401k match liability → 200190
+- FUTA liability → 200112 | SUTA/state unemp liability → 200111
+- Accrued insurance liability → 200103
+- AFLAC → 200121 | CT paid family leave → 200122
+- Commission/draw accrued liability → 200114
+- Bonus employees or owners → 600102
+- Salesperson commission/incentive new → 600109 | used → 600110
+- F&I compensation → 600103
+- Demo expense → 600113
+- Advisor/counter/service writer comp → 600105
+- Express tech / flat rate / tech time → 600114
+- Payroll checking / payroll cash account → 202A
+- Tax checking / M&T bank taxes → 202M
+- Non-payroll (inventory, COGS, sales, fixed assets, real estate) → NONE
+
+OUTPUT FORMAT — one line per account, pipe-separated, NO JSON, NO markdown, NO extra text:
+INDEX|NETCHEX_COL_OR_NONE|CONFIDENCE|REASON
+
+Confidence: high=obvious match, medium=plausible, low=uncertain, none=no payroll match
+
+Example output:
+1|600105|high|Owner salary is regular wages
+2|200101|high|401k employee accrued liability
+3|NONE|none|Inventory account not payroll-related
+
+Output ONLY the pipe-delimited lines.`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-calls': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      messages: [{role:'user', content:prompt}]
+    })
+  });
+
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const text = data.content.map(c=>c.text||'').join('');
+  return parsePipe(text, accounts, offset);
+}
+
+// ─── RUN MAPPING ───────────────────────────────────────────────────────────
+async function runMapping() {
+  const coaText = document.getElementById('coaText').value;
+  const accounts = parseCOA(coaText);
+  const err = document.getElementById('step2Error');
+
+  if (!accounts.length) { err.textContent='⚠ No accounts found. Check formatting.'; err.style.display='block'; return; }
+  err.style.display='none';
+
+  const btn = document.getElementById('mapBtn');
+  btn.disabled = true; btn.textContent = '⏳ Mapping...';
+  document.getElementById('progressWrap').style.display = 'block';
+
+  const CHUNK = 25;
+  const chunks = chunk(accounts, CHUNK);
+  let all = [];
+
+  try {
+    for (let i=0; i<chunks.length; i++) {
+      document.getElementById('progressLabel').textContent = `Batch ${i+1} of ${chunks.length}...`;
+      document.getElementById('progressCount').textContent = `${all.length + chunks[i].length}/${accounts.length}`;
+      document.getElementById('progressFill').style.width = `${((all.length)/accounts.length)*100}%`;
+
+      const result = await mapChunk(chunks[i], i*CHUNK);
+      all = all.concat(result);
+
+      if (i < chunks.length-1) await new Promise(r=>setTimeout(r,350));
+    }
+
+    mappings = all;
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressLabel').textContent = `Complete — ${all.length} accounts mapped`;
+
+    setTimeout(()=>{
+      updateStats();
+      renderTable();
+      const name = document.getElementById('companyName').value;
+      document.getElementById('panel3Title').textContent = `Review Mappings — ${name}`;
+      setStep(3);
+    }, 400);
+
+  } catch(e) {
+    err.textContent = '⚠ ' + e.message;
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '🤖 Run AI Mapping';
+    setTimeout(()=>{ document.getElementById('progressWrap').style.display='none'; }, 2000);
+  }
+}
+
+// ─── STATS ─────────────────────────────────────────────────────────────────
+function updateStats() {
+  const total = mappings.length;
+  const high = mappings.filter(r=>r.confidence==='high').length;
+  const review = mappings.filter(r=>r.confidence==='medium'||r.confidence==='low').length;
+  const none = mappings.filter(r=>r.confidence==='none').length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statHigh').textContent = high;
+  document.getElementById('statReview').textContent = review;
+  document.getElementById('statNone').textContent = none;
+
+  const a = document.getElementById('reviewAlert');
+  if (review > 0) {
+    a.innerHTML = `<div class="alert alert-yellow">⚠ <strong>${review} account${review>1?'s':''} need your review</strong> — use the filter below and correct each flagged mapping before exporting.</div>`;
+  } else {
+    a.innerHTML = `<div class="alert alert-green">✓ All accounts mapped with high confidence — ready to export.</div>`;
+  }
+}
+
+// ─── FILTER & RENDER ───────────────────────────────────────────────────────
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const tbody = document.getElementById('tblBody');
+
+  let rows = mappings.filter(r=>{
+    if (activeFilter==='review') return r.confidence==='medium'||r.confidence==='low';
+    if (activeFilter==='high') return r.confidence==='high';
+    if (activeFilter==='none') return r.confidence==='none';
+    return true;
+  }).filter(r=>{
+    if (!q) return true;
+    return (r.dmsNum||'').toLowerCase().includes(q)
+      || (r.dmsDesc||'').toLowerCase().includes(q)
+      || (r.netchexLabel||'').toLowerCase().includes(q)
+      || (r.netchexCol||'').toLowerCase().includes(q);
+  });
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--muted);font-family:var(--mono);">No accounts in this filter.</td></tr>`;
+    return;
+  }
+
+  const confColor = {high:'#00e5a0', medium:'#f59e0b', low:'#f59e0b', none:'#ef4444'};
+  const confLabel = {high:'✓ HIGH', medium:'⚠ MED', low:'⚠ LOW', none:'✗ NONE'};
+
+  const selectOpts = GL.map(g=>`<option value="${g.col}">${g.col}: ${g.label}</option>`).join('');
+
+  tbody.innerHTML = rows.map(r=>{
+    const cc = confColor[r.confidence]||'#6b7280';
+    const cl = confLabel[r.confidence]||'—';
+    const isReview = r.confidence==='medium'||r.confidence==='low';
+    return `<tr class="${isReview?'review-row':''}">
+      <td style="font-family:var(--mono);color:var(--accent);font-size:11px;white-space:nowrap;">${esc(r.dmsNum||'—')}</td>
+      <td style="color:var(--muted);font-size:11px;max-width:180px;">${esc(r.dmsDesc)}</td>
+      <td>
+        <select class="map-select" onchange="updateMap(${r.index},this.value)">
+          <option value="">— No mapping —</option>
+          ${selectOpts.replace(`value="${r.netchexCol||''}"`,`value="${r.netchexCol||''}" selected`)}
+        </select>
+      </td>
+      <td><span class="conf-badge" style="background:${cc}18;border:1px solid ${cc}40;color:${cc};">${cl}</span></td>
+      <td style="font-size:11px;color:var(--muted);max-width:220px;">${esc(r.reason)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function updateMap(index, col) {
+  const r = mappings.find(m=>m.index===index);
+  if (!r) return;
+  r.netchexCol = col||null;
+  r.netchexLabel = col ? (GL_MAP[col]||col) : null;
+  r.confidence = col ? 'high' : 'none';
+  updateStats();
+}
+
+// ─── EXPORT CSV ────────────────────────────────────────────────────────────
+function exportCSV() {
+  const code = document.getElementById('companyCode').value.trim()||'CO';
+  const colMap = {};
+  mappings.forEach(r=>{ if(r.netchexCol) colMap[r.netchexCol]=r.dmsNum||r.dmsDesc; });
+
+  const headers = ['Company Code','DIV','BU','DEPT','Division Name','Business Unit Name','Department Name',
+    ...GL.map(g=>`${g.col}: ${g.label}`)];
+  const row = [code,'1','1','ALL','ALL DEPARTMENTS','ALL BUs','MAPPED ACCOUNTS',
+    ...GL.map(g=>colMap[g.col]||'')];
+
+  const e = v=>/[,"\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:String(v);
+  const csv = [headers.map(e).join(','), row.map(e).join(',')].join('\r\n');
+
+  const blob = new Blob([csv],{type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`GL_Import_${code}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ─── RESET ─────────────────────────────────────────────────────────────────
+function resetAll() {
+  if (!confirm('Start a new client? This clears all current mappings.')) return;
+  mappings=[];
+  document.getElementById('companyCode').value='';
+  document.getElementById('companyName').value='';
+  document.getElementById('repName').value='';
+  document.getElementById('contactName').value='';
+  document.getElementById('dmsPlatform').value='';
+  document.getElementById('dealerType').value='';
+  document.getElementById('coaText').value='';
+  updateCoaLabel();
+  setStep(1);
+}
+
+init();
+</script>
+</body>
+</html>
